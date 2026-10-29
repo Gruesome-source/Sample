@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My Day Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F5F3;--panel:#FFFFFF;--ink:#1B2B29;--mute:#5F726F;--line:#D5E0DC;--accent:#1F7A6B;--accent-ink:#FFFFFF;--warm:#E0A030;--alert:#C8503C;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111917;--panel:#1A2522;--ink:#E7F0ED;--mute:#93A7A2;--line:#2C3C38;--accent:#4FC2AE;--accent-ink:#0B1614;--warm:#E8B04A;--alert:#EE7B67}}
+:root[data-theme="dark"]{--bg:#111917;--panel:#1A2522;--ink:#E7F0ED;--mute:#93A7A2;--line:#2C3C38;--accent:#4FC2AE;--accent-ink:#0B1614;--warm:#E8B04A;--alert:#EE7B67}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.45}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:2rem;font-weight:800;margin:0;letter-spacing:-.02em}
+h2{font-size:1.1rem;font-weight:600;margin:0 0 10px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--warm);outline-offset:2px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.datenav{display:flex;align-items:center;gap:6px}
+.datenav button{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 12px}
+.datenav span{min-width:140px;text-align:center;font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.hero{display:flex;gap:18px;align-items:center}
+.ring{--p:0;width:96px;height:96px;border-radius:50%;flex:none;display:grid;place-items:center;background:conic-gradient(var(--accent) calc(var(--p)*1%),var(--line) 0)}
+.ring b{width:74px;height:74px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-size:1.4rem;font-weight:800}
+.stats{display:flex;gap:22px;flex-wrap:wrap}
+.stats div{min-width:70px}.stats strong{display:block;font-size:1.5rem;font-weight:800}.stats small{color:var(--mute)}
+.week{display:flex;gap:8px;align-items:flex-end;height:90px;margin-top:6px}
+.week div{flex:1;text-align:center;font-size:.75rem;color:var(--mute)}
+.bar{height:64px;background:var(--line);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden;margin-bottom:4px}
+.bar i{display:block;width:100%;background:var(--accent)}
+.week .today .bar{outline:2px solid var(--warm)}
+form.add{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:center}
+form.add input[type=text]{grid-column:1/-1;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+form.add input[type=time]{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+form.add label{font-size:.9rem;color:var(--mute);display:flex;gap:6px;align-items:center}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:9px 16px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+ul{list-style:none;margin:0;padding:0}
+li.item{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+li.item:first-child{border-top:0}
+li.item input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+li.item .t{flex:1;min-width:0;overflow-wrap:anywhere}
+li.item.done .t{text-decoration:line-through;color:var(--mute)}
+.tag{font-size:.8rem;color:var(--mute)}
+.tag.late{color:var(--alert);font-weight:600}
+.del{background:none;border:0;color:var(--mute);font-size:1.2rem;padding:4px 8px}
+.empty{color:var(--mute);margin:4px 0}
+.banner{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--warm);color:#1B1B1B;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:none;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.banner.show{display:flex}
+.banner button{background:#1B1B1B;color:#fff;border:0;border-radius:8px;padding:6px 12px;margin-left:6px}
+.note{font-size:.85rem;color:var(--mute);margin:8px 0 0}
+@media (max-width:480px){form.add{grid-template-columns:1fr 1fr}.hero{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div><h1 id="greet">My day</h1><div class="tag" id="clock"></div></div>
+  <div class="datenav">
+    <button id="prev" aria-label="Previous day">&lt;</button>
+    <span id="dlabel"></span>
+    <button id="next" aria-label="Next day">&gt;</button>
+    <button id="tod">Today</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" role="alert"><span id="btext"></span><span><button id="bdone">Mark done</button><button id="bsnooze">Snooze 10 min</button><button id="bclose">Dismiss</button></span></div>
+
+<section class="panel hero" aria-label="Progress">
+  <div class="ring" id="ring"><b id="pct">0%</b></div>
+  <div class="stats">
+    <div><strong id="sdone">0/0</strong><small>done today</small></div>
+    <div><strong id="sstreak">0</strong><small>day streak</small></div>
+    <div><strong id="sweek">0%</strong><small>7-day average</small></div>
+  </div>
+</section>
+
+<section class="panel" aria-label="Last seven days">
+  <h2>Last 7 days</h2>
+  <div class="week" id="week"></div>
+</section>
+
+<section class="panel">
+  <h2>Add a task or habit</h2>
+  <form class="add" id="form">
+    <input type="text" id="title" placeholder="e.g. Morning walk, Submit report" required maxlength="120" aria-label="Task name">
+    <input type="time" id="time" aria-label="Time">
+    <label><input type="checkbox" id="rep" checked> Repeat daily</label>
+    <label><input type="checkbox" id="rem" checked> Remind me</label>
+    <button class="btn" type="submit">Add</button>
+  </form>
+  <p class="note">Unchecked "Repeat daily" makes it a one-time task for the day you are viewing.</p>
+</section>
+
+<section class="panel">
+  <h2>Schedule</h2>
+  <ul id="list"></ul>
+</section>
+
+<section class="panel">
+  <h2>Reminders</h2>
+  <p class="note" id="rstatus" style="margin-top:0"></p>
+  <p style="margin:10px 0 0"><button class="btn" id="enable">Turn on reminders</button> <button class="btn ghost" id="test">Test reminder</button></p>
+  <p class="note">Reminders fire at the task's time while this page is open in a tab. You will see a banner, hear a chime, and get a system notification if your browser allows it. Keep the tab open (it can be in the background).</p>
+</section>
+</main>
+
+<script>
+(function(){
+var KEY='daytracker.v1';
+var state={items:[],done:{},fired:{}};
+var view=new Date();view.setHours(0,0,0,0);
+var current=null; // item currently in banner
+
+function load(){try{var r=localStorage.getItem(KEY);if(r){var d=JSON.parse(r);state.items=d.items||[];state.done=d.done||{};state.fired=d.fired||{}}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function ds(d){var m=d.getMonth()+1,x=d.getDate();return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(x<10?'0':'')+x}
+function addDays(d,n){var c=new Date(d);c.setDate(c.getDate()+n);return c}
+function $(id){return document.getElementById(id)}
+function applies(it,date){return it.repeat?date>=it.created:it.date===date}
+function isDone(it,date){return !!(state.done[date]&&state.done[date][it.id])}
+function toggle(id,date,val){state.done[date]=state.done[date]||{};if(val)state.done[date][id]=1;else delete state.done[date][id];save();render()}
+function dayStats(date){var t=0,n=0;state.items.forEach(function(it){if(applies(it,date)){t++;if(isDone(it,date))n++}});return{t:t,n:n}}
+function fmtTime(t){if(!t)return'';var p=t.split(':'),h=+p[0],m=p[1];return (h%12||12)+':'+m+(h<12?' AM':' PM')}
+function esc(s){return s.replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+
+function render(){
+  var today=ds(new Date()),vd=ds(view),isToday=vd===today;
+  $('dlabel').textContent=isToday?'Today':view.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  var h=new Date().getHours();
+  $('greet').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening');
+  var s=dayStats(vd),pct=s.t?Math.round(s.n/s.t*100):0;
+  $('ring').style.setProperty('--p',pct);$('pct').textContent=pct+'%';$('sdone').textContent=s.n+'/'+s.t;
+  // streak: consecutive days ending today (or yesterday) with all tasks done
+  var streak=0,d=new Date();d.setHours(0,0,0,0);
+  var st=dayStats(ds(d));if(!(st.t&&st.n===st.t))d=addDays(d,-1);
+  for(var i=0;i<400;i++){var x=dayStats(ds(d));if(x.t&&x.n===x.t){streak++;d=addDays(d,-1)}else break}
+  $('sstreak').textContent=streak;
+  // week
+  var wk='',sum=0,cnt=0;
+  for(var k=6;k>=0;k--){var dd=addDays(new Date(),-k),q=dayStats(ds(dd)),p=q.t?q.n/q.t*100:0;if(q.t){sum+=p;cnt++}
+    wk+='<div class="'+(k===0?'today':'')+'"><div class="bar" title="'+q.n+' of '+q.t+'"><i style="height:'+p+'%"></i></div>'+dd.toLocaleDateString(undefined,{weekday:'short'})+'</div>'}
+  $('week').innerHTML=wk;$('sweek').textContent=(cnt?Math.round(sum/cnt):0)+'%';
+  // list
+  var items=state.items.filter(function(it){return applies(it,vd)}).sort(function(a,b){return (a.time||'99:99').localeCompare(b.time||'99:99')});
+  var nowT=new Date().toTimeString().slice(0,5),out='';
+  items.forEach(function(it){var dn=isDone(it,vd),late=isToday&&!dn&&it.time&&it.time<nowT;
+    out+='<li class="item'+(dn?' done':'')+'"><input type="checkbox" data-id="'+it.id+'" '+(dn?'checked':'')+' aria-label="Mark done"><span class="t">'+esc(it.title)+'<br><span class="tag'+(late?' late':'')+'">'+(it.time?fmtTime(it.time):'Anytime')+(it.repeat?' · daily':' · once')+(it.remind&&it.time?' · reminder on':'')+(late?' · overdue':'')+'</span></span><button class="del" data-del="'+it.id+'" aria-label="Delete task">&times;</button></li>'});
+  $('list').innerHTML=out||'<p class="empty">Nothing scheduled for this day. Add your first task above.</p>';
+  updStatus();
+}
+
+function updStatus(){
+  var p=('Notification' in window)?Notification.permission:'unsupported',t;
+  if(p==='granted')t='Reminders are on. System notifications are allowed.';
+  else if(p==='denied')t='System notifications are blocked in your browser. You will still get an in-page banner and chime.';
+  else if(p==='unsupported')t='This browser has no system notifications. You will get an in-page banner and chime.';
+  else t='Turn on reminders to allow system notifications. Banner and chime work either way.';
+  $('rstatus').textContent=t;
+}
+
+function chime(){try{var C=window.AudioContext||window.webkitAudioContext,c=new C(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.setValueAtTime(.15,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.8);o.start();o.stop(c.currentTime+.8)}catch(e){}}
+function notify(it,test){
+  current=test?null:it;
+  $('btext').textContent=test?'Test reminder: this is how reminders will look.':'Reminder: '+it.title+(it.time?' ('+fmtTime(it.time)+')':'');
+  $('bdone').style.display=$('bsnooze').style.display=test?'none':'';
+  $('banner').classList.add('show');chime();
+  try{if('Notification' in window&&Notification.permission==='granted')new Notification(test?'Test reminder':'Time for: '+it.title,{body:test?'Reminders are working.':(it.time?fmtTime(it.time):'')})}catch(e){}
+}
+function check(){
+  var now=new Date(),today=ds(now),t=now.toTimeString().slice(0,5);
+  $('clock').textContent=now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+' · '+now.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+  state.items.forEach(function(it){
+    if(!it.remind||!it.time||!applies(it,today)||isDone(it,today))return;
+    var k=it.id+'|'+today+'|'+(it.snooze||it.time);
+    var due=it.snooze&&it.snoozeDate===today?it.snooze:it.time;
+    if(t>=due&&!state.fired[k]&&t<=hhmm(due,60)){state.fired[k]=1;if(it.snooze){it.snooze=null}save();notify(it)}
+  });
+}
+function hhmm(t,plus){var p=t.split(':'),m=(+p[0])*60+(+p[1])+plus;if(m>=1440)m=1439;return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2)}
+
+$('form').addEventListener('submit',function(e){e.preventDefault();
+  var title=$('title').value.trim();if(!title)return;
+  var vd=ds(view);
+  state.items.push({id:'i'+Date.now(),title:title,time:$('time').value,repeat:$('rep').checked,remind:$('rem').checked,date:vd,created:vd});
+  save();$('title').value='';$('time').value='';render();check();
+});
+$('list').addEventListener('change',function(e){var id=e.target.getAttribute('data-id');if(id)toggle(id,ds(view),e.target.checked)});
+$('list').addEventListener('click',function(e){var id=e.target.getAttribute('data-del');if(id&&confirm('Delete this task (all days)?')){state.items=state.items.filter(function(i){return i.id!==id});save();render()}});
+$('prev').onclick=function(){view=addDays(view,-1);render()};
+$('next').onclick=function(){view=addDays(view,1);render()};
+$('tod').onclick=function(){view=new Date();view.setHours(0,0,0,0);render()};
+$('enable').onclick=function(){if('Notification' in window&&Notification.permission==='default'){Notification.requestPermission().then(updStatus)}else{updStatus()}notify(null,true)};
+$('test').onclick=function(){notify(null,true)};
+$('bclose').onclick=function(){$('banner').classList.remove('show')};
+$('bdone').onclick=function(){if(current)toggle(current.id,ds(new Date()),true);$('banner').classList.remove('show')};
+$('bsnooze').onclick=function(){if(current){var d=new Date(Date.now()+10*60000);current.snooze=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);current.snoozeDate=ds(d);save()}$('banner').classList.remove('show')};
+
+load();
+if(!state.items.length){var t0=ds(new Date());state.items=[
+ {id:'s1',title:'Plan the day',time:'08:00',repeat:true,remind:true,date:t0,created:t0},
+ {id:'s2',title:'Exercise',time:'17:30',repeat:true,remind:true,date:t0,created:t0},
+ {id:'s3',title:'Review progress',time:'21:00',repeat:true,remind:true,date:t0,created:t0}]}
+render();check();setInterval(check,15000);setInterval(render,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){check();render()}});
+})();
+</script>
+</body>
+</html>
